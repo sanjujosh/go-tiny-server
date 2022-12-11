@@ -9,3 +9,6 @@ Restart=always
 RestartSec=1
 ExecStart=/usr/local/bin/gotinyserver
 SyslogIdentifier=GoTinyServer
+
+[Install]
+WantedBy=user.target
