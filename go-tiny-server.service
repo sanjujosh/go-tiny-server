@@ -1,0 +1,10 @@
+[Unit]
+Description=Go Tiny Server service
+After=systend-user-sessions.service
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+ExecStart=/usr/bin/gotinyserver
+SyslogIdentifier=GoTinyServer
