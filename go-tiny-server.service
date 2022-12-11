@@ -3,7 +3,7 @@ Description=Go Tiny Server service
 After=systend-user-sessions.service
 
 [Service]
-user=root
+User=root
 Type=simple
 Restart=always
 RestartSec=1
