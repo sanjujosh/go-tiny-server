@@ -24,6 +24,26 @@ var (
 	az     = ""
 )
 
+type ClientMeta struct {
+	Headers http.Header `json:"headers,omitempty"`
+	URL     string      `json:"url,omitempty"`
+	Host    string      `json:"host,omitempty"`
+	Method  string      `json:"method,omitempty"`
+}
+
+type ServerMeta struct {
+	Hostname string    `json:"hostname,omitempty"`
+	Region   string    `json:"region,omitempty"`
+	AZ       string    `json:"az,omitempty"`
+	IP       []string  `json:"ip,omitempty"`
+	Time     time.Time `json:"time,omitempty"`
+}
+
+type ApiReponse struct {
+	Server ServerMeta `json:"server,omitempty"`
+	Client ClientMeta `json:"client,omitempty"`
+}
+
 func main() {
 	// Parse command line arguments
 	flag.StringVar(&port, "port", getEnv("PORT_NUMBER", "8080"), "port number to listen")
@@ -101,26 +121,24 @@ func whoamiHandler(w http.ResponseWriter, req *http.Request) {
 func apiHandler(w http.ResponseWriter, req *http.Request) {
 	hostname, _ := os.Hostname()
 
-	data := struct {
-		Hostname string      `json:"hostname,omitempty"`
-		Region   string      `json:"region,omitempty"`
-		AZ       string      `json:"az,omitempty"`
-		IP       []string    `json:"ip,omitempty"`
-		Headers  http.Header `json:"headers,omitempty"`
-		URL      string      `json:"url,omitempty"`
-		Host     string      `json:"host,omitempty"`
-		Method   string      `json:"method,omitempty"`
-		Time     time.Time   `json:"time,omitempty"`
-	}{
+	server := ServerMeta{
 		Hostname: hostname,
 		Region:   region,
 		AZ:       az,
 		IP:       []string{},
-		Headers:  req.Header,
-		URL:      req.URL.RequestURI(),
-		Host:     req.Host,
-		Method:   req.Method,
 		Time:     time.Now(),
+	}
+
+	client := ClientMeta{
+		Headers: req.Header,
+		URL:     req.URL.RequestURI(),
+		Host:    req.Host,
+		Method:  req.Method,
+	}
+
+	response := ApiReponse{
+		Server: server,
+		Client: client,
 	}
 
 	ifaces, _ := net.Interfaces()
@@ -136,13 +154,13 @@ func apiHandler(w http.ResponseWriter, req *http.Request) {
 				ip = v.IP
 			}
 			if ip != nil {
-				data.IP = append(data.IP, ip.String())
+				server.IP = append(server.IP, ip.String())
 			}
 		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(data); err != nil {
+	if err := json.NewEncoder(w).Encode(response); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
